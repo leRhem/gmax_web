@@ -7,6 +7,20 @@
     "nodejs_compat"
   ],
 
+  "vars": {
+    "DATABASE_URL": "postgresql://postgres.qxbdsbobnyoqkzltcpke:kucGCanM4ceYfXQh3xrACqZZyE@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://qxbdsbobnyoqkzltcpke.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4YmRzYm9ibnlvcWt6bHRjcGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5MDQzNDgsImV4cCI6MjA4NTQ4MDM0OH0.uc_utdQ32OBh3QFWI1KYvv4tnOZE8lz1jMxLaCWwMrE",
+    "AUTH_URL": "https://www.gmaxstudioz.com",
+    "NEXT_PUBLIC_APP_URL": "https://www.gmaxstudioz.com",
+    "NEXTJS_ENV": "production",
+    "PAYSTACK_PUBLIC_KEY": "pk_test_a5854ad75eb6983b8b6d70f64f2007c49a3265d9",
+    "TERMII_SENDER_ID": "GMAX",
+    "R2_ACCOUNT_ID": "42b40677ea1da496602c65f13ca87f68",
+    "R2_BUCKET_NAME": "gmax-studio",
+    "R2_PUBLIC_URL": "https://42b40677ea1da496602c65f13ca87f68.r2.cloudflarestorage.com/gmax-studio"
+  },
+
   "routes": [
     { "pattern": "www.gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
     { "pattern": "gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
@@ -42,6 +56,13 @@
       }
     ]
   },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "5ed6019b7e794afba00bff4703e5d953",
+      "localConnectionString": "postgresql://postgres.qxbdsbobnyoqkzltcpke:kucGCanM4ceYfXQh3xrACqZZyE@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+    }
+  ],
 
   "migrations": [
     {
@@ -50,5 +71,20 @@
         "DOQueueHandler"
       ]
     }
-  ]
+  ],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  }
 }
