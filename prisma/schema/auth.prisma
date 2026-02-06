@@ -1,0 +1,179 @@
+// ==========================================
+// AUTH & STAFF (Invitation-Only System)
+// ==========================================
+
+model Staff {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  phone         String?
+  password      String? // Created after accepting invitation
+  image         String?
+  role          StaffRole @default(STAFF)
+
+  // Studio Assignment
+  studioId String?
+  studio   Studio? @relation(fields: [studioId], references: [id], onDelete: SetNull)
+
+  // Account Status
+  isActive   Boolean   @default(true)
+  invitedAt  DateTime?
+  acceptedAt DateTime? // When they clicked the invitation link
+
+  // Relations
+  accounts    Account[]
+  sessions    Session[]
+  invitations StaffInvitation[] @relation("InvitedBy")
+
+  uploadBatches AssetUploadBatch[]
+
+  createdBookings  Booking[] @relation("BookingCreatedBy")
+  assignedBookings Booking[] @relation("BookingPhotographer")
+  paymentsRecorded Payment[] @relation("PaymentRecordedBy")
+  photosUploaded   Photo[]   @relation("PhotoUploadedBy")
+
+  // Phase 6: Custom Permissions and Activity Logs
+  customPermissions StaffPagePermission[]
+  activityLogs      ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([studioId])
+}
+
+// Staff Invitation Flow (Admin creates, Staff accepts)
+model StaffInvitation {
+  id       String    @id @default(cuid())
+  email    String
+  phone    String?
+  name     String
+  role     StaffRole
+  studioId String?
+
+  // Invitation Token
+  token     String   @unique @default(cuid())
+  expiresAt DateTime // 7 days from creation
+
+  // Status
+  status     InvitationStatus @default(PENDING)
+  acceptedAt DateTime?
+
+  // Who sent it
+  invitedById String
+  invitedBy   Staff  @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
+  @@index([status])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum StaffRole {
+  ADMIN
+  MANAGER
+  RECEPTIONIST
+  VIDEO_EDITOR
+  PHOTO_EDITOR
+  VIDEOGRAPHER
+  PHOTOGRAPHER
+  STAFF
+}
+
+// Auth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user Staff @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         Staff    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==========================================
+// STAFF PAGE PERMISSIONS (Phase 6)
+// ==========================================
+
+model StaffPagePermission {
+  id      String  @id @default(cuid())
+  staffId String
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  page    String // e.g., "/dashboard/bookings"
+  allowed Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, page])
+  @@index([staffId])
+}
+
+// ==========================================
+// ACTIVITY LOGS (Phase 6)
+// ==========================================
+
+model ActivityLog {
+  id String @id @default(cuid())
+
+  action   String // CREATE, UPDATE, DELETE, REVERT
+  entity   String // booking, client, service, payment, etc.
+  entityId String // ID of the affected record
+
+  // Changes stored as JSON
+  previousData Json? // For UPDATE/DELETE - original data
+  newData      Json? // For CREATE/UPDATE - new data
+
+  // Who performed the action
+  staffId String?
+  staff   Staff?  @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  // For revert functionality
+  canRevert  Boolean   @default(true)
+  revertedAt DateTime?
+  revertedBy String?
+
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

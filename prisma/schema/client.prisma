@@ -1,0 +1,31 @@
+// ==========================================
+// CLIENT CRM (Type-Based Classification)
+// ==========================================
+
+model Client {
+  id        String     @id @default(cuid())
+  name      String
+  phone     String     @unique
+  email     String?    @unique
+  address   String?
+  notes     String?    @db.Text
+  
+  // Client Classification (VIP, VVIP, Standard, Corporate)
+  type      ClientType @default(STANDARD)
+  
+  bookings  Booking[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([phone])
+  @@index([name])
+  @@index([type])
+}
+
+enum ClientType {
+  STANDARD
+  VIP
+  VVIP
+  CORPORATE
+}

@@ -1,0 +1,13 @@
+// ==========================================
+// GMAX STUDIO MANAGEMENT SYSTEM - PRISMA SCHEMA
+// Multi-Studio, Multi-Location Architecture
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

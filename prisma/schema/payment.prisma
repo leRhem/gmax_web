@@ -1,0 +1,88 @@
+// ==========================================
+// PAYMENT SYSTEM (Paystack Ready)
+// ==========================================
+
+model Payment {
+  id String @id @default(cuid())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  amount Decimal       @db.Decimal(10, 2)
+  method PaymentMethod @default(CASH)
+  status PaymentStatus @default(COMPLETED)
+
+  // Paystack Integration
+  paystackReference String? @unique
+  paystackResponse  Json?
+
+  // Receipt
+  receiptNumber String  @unique
+  receiptUrl    String?
+  notes         String? @db.Text
+
+  // Recorded By
+  recordedById String
+  recordedBy   Staff  @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+
+  paymentDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([paymentDate])
+}
+
+// ==========================================
+// PAYMENT LINK (Persistent, Resendable)
+// ==========================================
+
+model PaymentLink {
+  id String @id @default(cuid())
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Paystack data
+  paystackUrl String
+  paystackRef String @unique
+  accessCode  String
+
+  // Amount at generation time
+  amount Decimal @db.Decimal(10, 2)
+
+  // Status
+  status PaymentLinkStatus @default(ACTIVE)
+
+  // Tracking
+  viewCount    Int       @default(0)
+  lastViewedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  @@index([paystackRef])
+  @@index([status])
+}
+
+enum PaymentLinkStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  POS
+  ONLINE // Paystack
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  COMPLETED
+  FAILED
+  REFUNDED
+}

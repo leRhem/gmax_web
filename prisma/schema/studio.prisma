@@ -1,0 +1,74 @@
+// ==========================================
+// STUDIO & LOCATION MANAGEMENT
+// ==========================================
+
+model Studio {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  city    String
+  state   String
+  country String @default("Nigeria")
+  address String @db.Text
+
+  phone String?
+  email String?
+
+  isActive Boolean @default(true)
+
+  // Relations
+  staff         Staff[]
+  bookings      Booking[]
+  settings      StudioSettings?
+  dailyCapacity DailyCapacity[]
+  equipment     Equipment[]
+  courses       Course[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([slug])
+}
+
+model StudioSettings {
+  id       String @id @default(cuid())
+  studioId String @unique
+  studio   Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  // Session Capacity (15 clients per day)
+  maxSessionsPerDay      Int @default(15)
+  defaultSessionDuration Int @default(45) // minutes
+
+  // Booking Confirmation
+  requireConfirmation     Boolean @default(true)
+  confirmationExpiryHours Int     @default(24)
+
+  // Payment Rules
+  allowPartialPayment      Boolean @default(true)
+  minimumDepositPercentage Int     @default(50)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DailyCapacity {
+  id String @id @default(cuid())
+
+  studioId String
+  studio   Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  date DateTime @db.Date
+
+  // ✅ Session Tracking
+  maxSessions       Int @default(15)
+  bookedSessions    Int @default(0)
+  availableSessions Int @default(15)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studioId, date])
+  @@index([studioId, date])
+}

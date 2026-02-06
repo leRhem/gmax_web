@@ -1,0 +1,67 @@
+// ==========================================
+// DYNAMIC SERVICE CATALOG
+// ==========================================
+
+model ServiceCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  description String?      @db.Text
+  image       String?
+  type        CategoryType @default(INDOOR)
+
+  services Service[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  // Pricing
+  price       Decimal     @db.Decimal(10, 2)
+  salePrice   Decimal?    @db.Decimal(10, 2)
+  duration    String?
+  serviceType ServiceType @default(STUDIO)
+  features    String[]
+
+  // Session Configuration
+  sessionDuration  Int @default(45) // minutes per session
+  includesSessions Int @default(1) // base sessions included in package
+
+  // Add-Ons Configuration
+  allowExtraOutfits   Boolean  @default(false)
+  extraOutfitPrice    Decimal? @db.Decimal(10, 2)
+  extraOutfitDuration Int?     @default(45) // minutes per extra outfit
+
+  allowExtraPics Boolean  @default(false)
+  extraPicPrice  Decimal? @db.Decimal(10, 2)
+
+  // Relations
+  bookingItems BookingItem[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+enum ServiceType {
+  STUDIO
+  OUTDOOR
+  ON_LOCATION
+}
+
+enum CategoryType {
+  INDOOR
+  OUTDOOR
+  ADDON
+}

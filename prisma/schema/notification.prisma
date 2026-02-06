@@ -1,0 +1,51 @@
+// ==========================================
+// NOTIFICATION SYSTEM (SMS/WhatsApp)
+// ==========================================
+
+model Notification {
+  id String @id @default(cuid())
+
+  clientPhone String
+  clientName  String
+  clientEmail String?
+
+  type    NotificationType
+  message String              @db.Text
+  channel NotificationChannel
+
+  status       NotificationStatus @default(PENDING)
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  errorMessage String?            @db.Text
+
+  bookingId String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([bookingId, type, channel])
+  @@index([status])
+  @@index([bookingId])
+  @@index([sentAt])
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER
+  PAYMENT_REMINDER
+  PHOTOS_READY
+  PHOTOS_EXPIRING
+  STAFF_INVITATION
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+}

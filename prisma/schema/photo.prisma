@@ -1,0 +1,117 @@
+// ==========================================
+// PHOTO DELIVERY (Cloudflare R2)
+// ==========================================
+
+model Photo {
+  id String @id @default(cuid())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Batch Tracking
+  batchId String?
+  batch   AssetUploadBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  // R2 Storage
+  r2Key    String
+  fileName String
+  fileSize Int
+  mimeType String
+
+  // Preview System
+  thumbnailKey String?
+  previewKey   String? // Low-res preview before payment
+  editedKey    String? // Edited version (if different from original)
+
+  // Status Tracking
+  status           PhotoStatus      @default(UPLOADED)
+  processingStatus ProcessingStatus @default(EDITING)
+
+  uploadedAt            DateTime @default(now())
+  expiresAt             DateTime // 30 days from upload
+  expirationWarningSent Boolean  @default(false)
+
+  // Download Tracking
+  downloaded         Boolean   @default(false)
+  downloadedAt       DateTime?
+  downloadCount      Int       @default(0)
+  clientDownloaded   Boolean   @default(false)
+  clientDownloadedAt DateTime?
+
+  uploadedById String
+  uploadedBy   Staff  @relation("PhotoUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([bookingId])
+  @@index([batchId])
+  @@index([expiresAt])
+  @@index([status])
+}
+
+enum PhotoStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  DELIVERED
+  EXPIRED
+}
+
+enum ProcessingStatus {
+  EDITING
+  EDITED
+  APPROVED
+}
+
+model AssetUploadBatch {
+  id String @id @default(cuid())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   Staff  @relation(fields: [uploadedById], references: [id])
+
+  // Upload Details
+  totalFiles    Int
+  uploadedFiles Int @default(0)
+  failedFiles   Int @default(0)
+
+  status UploadStatus @default(NOT_YET)
+
+  // Processing
+  processingStartedAt   DateTime?
+  processingCompletedAt DateTime?
+
+  notes String? @db.Text
+
+  // Relations
+  photos Photo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+enum UploadStatus {
+  NOT_YET
+  COMPLETED
+  FAILED
+  IN_REVIEW
+  CANCELLED
+}
+
+model DeliveryToken {
+  id String @id @default(cuid())
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
+
+  downloads Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gmax-studioz",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
+  "routes": [
+    { "pattern": "www.gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
+    { "pattern": "gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
+    { "pattern": "dash.gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
+    { "pattern": "api.gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" },
+    { "pattern": "auth.gmaxstudioz.com/*", "zone_name": "gmaxstudioz.com" }
+  ],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "gmax-studioz" 
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "gmax-studio"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "DOQueueHandler"
+      ]
+    }
+  ]
+}

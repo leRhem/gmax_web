@@ -1,0 +1,73 @@
+// ==========================================
+// ACADEMY - COURSES & STUDENT ENROLLMENT
+// ==========================================
+
+model Course {
+    id          String      @id @default(cuid())
+    name        String
+    slug        String      @unique
+    description String?     @db.Text
+    level       CourseLevel @default(BEGINNER)
+    duration    String // e.g. "8 weeks", "3 months"
+    price       Decimal     @db.Decimal(10, 2)
+    salePrice   Decimal?    @db.Decimal(10, 2)
+    curriculum  String[] // List of topics/modules
+    features    String[] // List of key features/highlights
+    maxStudents Int         @default(20)
+    image       String?
+
+    studioId String
+    studio   Studio @relation(fields: [studioId], references: [id])
+
+    students Student[]
+
+    isActive  Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([studioId])
+    @@index([level])
+    @@index([slug])
+}
+
+model Student {
+    id      String  @id @default(cuid())
+    name    String
+    phone   String
+    email   String?
+    address String?
+
+    courseId String
+    course   Course @relation(fields: [courseId], references: [id])
+
+    enrollmentDate DateTime         @default(now())
+    status         EnrollmentStatus @default(PENDING)
+
+    amountPaid Decimal @default(0) @db.Decimal(10, 2)
+    notes      String? @db.Text
+
+    // Confirmation token for public registration tracking
+    confirmationToken String? @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([courseId])
+    @@index([status])
+    @@index([phone])
+}
+
+enum CourseLevel {
+    BEGINNER
+    INTERMEDIATE
+    ADVANCED
+    MASTERCLASS
+}
+
+enum EnrollmentStatus {
+    PENDING // Just registered, awaiting payment
+    CONFIRMED // Payment received, enrolled
+    IN_PROGRESS // Currently taking course
+    COMPLETED // Finished course
+    CANCELLED // Dropped out
+}

@@ -1,0 +1,156 @@
+// ==========================================
+// BOOKING ENGINE (Multi-Service Support)
+// ==========================================
+
+model Booking {
+  id String @id @default(cuid())
+
+  // Client & Studio
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  studioId String
+  studio   Studio @relation(fields: [studioId], references: [id])
+
+  // Booking Details
+  bookingDate DateTime
+  photoCount  Int      @default(0)
+  notes       String?  @db.Text
+  tags        String[]
+
+  // Session Tracking
+  totalSessions  Int @default(1) // Total sessions booked (affects capacity)
+  baseOutfits    Int @default(1) // Outfits included in package
+  extraOutfits   Int @default(0) // Additional outfits added
+  extraPicsCount Int @default(0) // Extra "per picture" shots
+
+  // Status Tracking
+  bookingStatus  BookingStatus  @default(PENDING_CONFIRMATION)
+  paymentStatus  PaymentStatus  @default(PENDING)
+  deliveryStatus DeliveryStatus @default(PENDING)
+
+  // Confirmation System
+  confirmationToken     String?   @unique @default(cuid())
+  confirmationSentAt    DateTime?
+  confirmedAt           DateTime?
+  confirmationExpiresAt DateTime?
+
+  // Asset Tracking
+  assetsStatus       AssetStatus @default(NOT_UPLOADED)
+  assetsUploadedAt   DateTime?
+  assetsDownloaded   Boolean     @default(false)
+  assetsDownloadedAt DateTime?
+
+  // Staff Assignment
+  photographerId String?
+  photographer   Staff?  @relation("BookingPhotographer", fields: [photographerId], references: [id], onDelete: SetNull)
+
+  // Google Calendar
+  googleEventId String? @unique
+
+  // Relations
+  items         BookingItem[]
+  payments      Payment[]
+  photos        Photo[]
+  deliveryToken DeliveryToken?
+  confirmation  BookingConfirmation?
+  uploadBatches AssetUploadBatch[]
+  paymentLink   PaymentLink?
+
+  // Audit
+  createdBy String
+  creator   Staff    @relation("BookingCreatedBy", fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingDate])
+  @@index([clientId])
+  @@index([studioId])
+  @@index([paymentStatus])
+  @@index([bookingStatus])
+  @@index([confirmationToken])
+}
+
+// Junction Table: Booking ↔ Service (Many-to-Many)
+model BookingItem {
+  id String @id @default(cuid())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  priceSnapshot Decimal @db.Decimal(10, 2)
+  quantity      Int     @default(1)
+
+  createdAt DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([serviceId])
+}
+
+enum BookingStatus {
+  PENDING_CONFIRMATION // Waiting for client to confirm via link
+  CONFIRMED // Client confirmed, ready for shoot
+  COMPLETED
+  CANCELLED
+}
+
+enum AssetStatus {
+  NOT_UPLOADED
+  UPLOADING
+  UPLOADED
+  PROCESSING
+  READY_FOR_DOWNLOAD
+  DOWNLOADED
+}
+
+enum DeliveryStatus {
+  PENDING
+  EDITING
+  READY
+  DELIVERED
+}
+
+// ==========================================
+//  BOOKING CONFIRMATION
+// ==========================================
+
+model BookingConfirmation {
+  id String @id @default(cuid())
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
+
+  // Client Actions
+  viewedAt    DateTime?
+  viewCount   Int       @default(0)
+  modifiedAt  DateTime?
+  confirmedAt DateTime?
+
+  // Change Tracking
+  originalData    Json // Snapshot of original booking
+  modifiedData    Json? // Client-requested changes
+  changesApproved Boolean @default(false)
+
+  status ConfirmationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+  @@index([status])
+}
+
+enum ConfirmationStatus {
+  PENDING
+  VIEWED
+  MODIFIED
+  CONFIRMED
+  EXPIRED
+  CANCELLED
+}
